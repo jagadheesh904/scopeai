@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Auth Test</title>
+</head>
+<body>
+    <h1>Auth Test Page</h1>
+    <div>
+        <button onclick="testRegister()">Test Register</button>
+        <button onclick="testLogin()">Test Login</button>
+    </div>
+    <div id="result" style="margin-top: 20px; padding: 10px; border: 1px solid #ccc;"></div>
+
+    <script>
+        async function testRegister() {
+            const result = document.getElementById('result');
+            try {
+                const response = await fetch('http://localhost:8000/api/auth/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: 'test@test.com',
+                        password: 'test123',
+                        full_name: 'Test User'
+                    })
+                });
+                const data = await response.json();
+                result.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                result.innerHTML = `Error: ${error}`;
+            }
+        }
+
+        async function testLogin() {
+            const result = document.getElementById('result');
+            try {
+                const response = await fetch('http://localhost:8000/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: 'demo@scopeai.com',
+                        password: 'demo123'
+                    })
+                });
+                const data = await response.json();
+                result.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                result.innerHTML = `Error: ${error}`;
+            }
+        }
+    </script>
+</body>
+</html>
