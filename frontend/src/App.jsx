@@ -8,6 +8,7 @@ import ScopePreview from './components/scoping/ScopePreview';
 import CostEstimate from './components/scoping/CostEstimate';
 import ExportPanel from './components/export/ExportPanel';
 import LoginForm from './components/forms/LoginForm';
+import Chatbot from './components/chatbot/Chatbot';
 import './App.css';
 
 // Configure axios base URL - use 127.0.0.1 instead of localhost
@@ -47,24 +48,22 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
+  const [showChatbot, setShowChatbot] = useState(false);
 
   // Check authentication on component mount
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
-      // Verify token is valid by making a test request
       testAuthentication(token);
     }
   }, []);
 
   const testAuthentication = async (token) => {
     try {
-      // Try to get projects to verify token is valid
       const response = await axios.get('/projects/');
       setIsAuthenticated(true);
       setProjects(response.data);
     } catch (error) {
-      // Token is invalid, clear it
       localStorage.removeItem('token');
       setIsAuthenticated(false);
     }
@@ -92,23 +91,18 @@ function App() {
     setUser(null);
     setProjects([]);
     setCurrentProject(null);
+    setShowChatbot(false);
   };
 
   const handleProjectCreate = async (projectData) => {
     setIsLoading(true);
     try {
-      console.log('Creating project with data:', projectData);
-      
       const response = await axios.post('/projects/', projectData);
-      console.log('Project created:', response.data);
-      
       setCurrentProject(response.data);
       setActiveTab('scoping-workbench');
       loadProjects();
     } catch (error) {
       console.error('Error creating project:', error);
-      console.error('Error response:', error.response);
-      
       let errorMessage = 'Unknown error occurred';
       if (error.response) {
         errorMessage = error.response.data?.detail || `Server error: ${error.response.status}`;
@@ -117,7 +111,6 @@ function App() {
       } else {
         errorMessage = error.message;
       }
-      
       alert(`Error creating project: ${errorMessage}`);
     } finally {
       setIsLoading(false);
@@ -134,7 +127,6 @@ function App() {
       
       setGeneratedScope(response.data.scope);
       
-      // Update current project with generated scope
       const updatedProject = await axios.get(`/projects/${projectId}`);
       setCurrentProject(updatedProject.data);
       
@@ -157,7 +149,6 @@ function App() {
         responseType: 'blob'
       });
 
-      // Create download link
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
@@ -170,6 +161,10 @@ function App() {
       console.error('Error exporting:', error);
       alert('Error exporting project: ' + (error.response?.data?.detail || 'Unknown error'));
     }
+  };
+
+  const toggleChatbot = () => {
+    setShowChatbot(!showChatbot);
   };
 
   if (!isAuthenticated) {
@@ -191,7 +186,36 @@ function App() {
         <main className="main-content">
           {activeTab === 'scope-library' && (
             <div className="scope-library">
-              <h1>ScopeAI - AI Powered Project Scoping</h1>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2rem' }}>
+                <h1>ScopeAI - AI Powered Project Scoping</h1>
+                <button 
+                  onClick={toggleChatbot}
+                  style={{
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    color: 'white',
+                    border: 'none',
+                    padding: '12px 20px',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)',
+                    transition: 'transform 0.2s'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.transform = 'translateY(-2px)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.transform = 'translateY(0)';
+                  }}
+                >
+                  <span style={{ fontSize: '16px' }}>💬</span>
+                  AI Assistant
+                </button>
+              </div>
               <ProjectInputForm 
                 onSubmit={handleProjectCreate}
                 isLoading={isLoading}
@@ -250,6 +274,50 @@ function App() {
           )}
         </main>
       </div>
+
+      {/* Chatbot */}
+      {showChatbot && (
+        <Chatbot 
+          currentProject={currentProject}
+          onClose={() => setShowChatbot(false)}
+        />
+      )}
+
+      {/* Floating Chatbot Button */}
+      {!showChatbot && (
+        <button
+          onClick={toggleChatbot}
+          style={{
+            position: 'fixed',
+            bottom: '30px',
+            right: '30px',
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            color: 'white',
+            border: 'none',
+            borderRadius: '50%',
+            width: '70px',
+            height: '70px',
+            cursor: 'pointer',
+            boxShadow: '0 6px 20px rgba(0,0,0,0.15)',
+            fontSize: '28px',
+            zIndex: 999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transition: 'all 0.3s ease'
+          }}
+          onMouseEnter={(e) => {
+            e.target.style.transform = 'scale(1.1)';
+            e.target.style.boxShadow = '0 8px 25px rgba(0,0,0,0.2)';
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.transform = 'scale(1)';
+            e.target.style.boxShadow = '0 6px 20px rgba(0,0,0,0.15)';
+          }}
+        >
+          💬
+        </button>
+      )}
     </div>
   );
 }
